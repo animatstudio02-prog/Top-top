@@ -1,0 +1,1217 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gemstone Collector</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Nunito:wght@400;600;700;800;900&display=swap');
+
+:root {
+  --bg: #06060f;
+  --bg2: #0d0d20;
+  --bg3: #141430;
+  --bg4: #1c1c40;
+  --surface: #1a1a38;
+  --border: #252550;
+  --accent: #7c3aed;
+  --accent2: #06b6d4;
+  --gold: #f59e0b;
+  --text: #e8e8ff;
+  --muted: #6868aa;
+  --c-common: #9ca3af;
+  --c-uncommon: #34d399;
+  --c-rare: #60a5fa;
+  --c-epic: #c084fc;
+  --c-legendary: #fbbf24;
+  --c-mythic: #fb7185;
+  --danger: #ef4444;
+  --success: #22c55e;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: 'Nunito', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,0.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 80% 10%, rgba(255,255,255,0.3) 0%, transparent 100%),
+    radial-gradient(1px 1px at 50% 70%, rgba(255,255,255,0.2) 0%, transparent 100%),
+    radial-gradient(1px 1px at 10% 90%, rgba(255,255,255,0.3) 0%, transparent 100%),
+    radial-gradient(1px 1px at 90% 60%, rgba(255,255,255,0.2) 0%, transparent 100%),
+    radial-gradient(2px 2px at 35% 50%, rgba(124,58,237,0.3) 0%, transparent 100%),
+    radial-gradient(2px 2px at 65% 25%, rgba(6,182,212,0.2) 0%, transparent 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.screen { display:none; position:relative; z-index:1; }
+.screen.active { display:block; }
+
+#title-screen {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  text-align: center;
+}
+#title-screen.active { display:flex; }
+
+.title-gems-orbit {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  margin: 0 auto 30px;
+}
+
+.orbit-gem {
+  position: absolute;
+  font-size: 28px;
+  animation: orbit 8s linear infinite;
+  filter: drop-shadow(0 0 10px currentColor);
+}
+.orbit-gem:nth-child(1) { animation-delay: 0s; }
+.orbit-gem:nth-child(2) { animation-delay: -1.3s; }
+.orbit-gem:nth-child(3) { animation-delay: -2.6s; }
+.orbit-gem:nth-child(4) { animation-delay: -4s; }
+.orbit-gem:nth-child(5) { animation-delay: -5.3s; }
+.orbit-gem:nth-child(6) { animation-delay: -6.6s; }
+
+@keyframes orbit {
+  0% { transform: rotate(0deg) translateX(80px) rotate(0deg); }
+  100% { transform: rotate(360deg) translateX(80px) rotate(-360deg); }
+}
+
+.center-gem {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 56px;
+  filter: drop-shadow(0 0 30px rgba(124,58,237,0.8));
+  animation: pulse-gem 2s ease-in-out infinite;
+}
+
+@keyframes pulse-gem {
+  0%,100% { transform: translate(-50%,-50%) scale(1); filter: drop-shadow(0 0 30px rgba(124,58,237,0.8)); }
+  50% { transform: translate(-50%,-50%) scale(1.1); filter: drop-shadow(0 0 50px rgba(124,58,237,1)); }
+}
+
+.game-title {
+  font-family: 'Cinzel Decorative', serif;
+  font-size: clamp(28px, 6vw, 52px);
+  font-weight: 900;
+  background: linear-gradient(135deg, #a78bfa 0%, #60a5fa 50%, #fbbf24 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  line-height: 1.2;
+  margin-bottom: 8px;
+}
+
+.game-subtitle {
+  color: var(--muted);
+  font-size: 16px;
+  margin-bottom: 40px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+
+.title-buttons { display:flex; flex-direction:column; gap:12px; width:100%; max-width:300px; }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 28px;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 800;
+  font-size: 15px;
+  transition: all 0.2s;
+}
+.btn-primary { background: linear-gradient(135deg, var(--accent), #4f46e5); color: white; box-shadow: 0 8px 30px rgba(124,58,237,0.4); }
+.btn-primary:hover { transform:translateY(-2px); box-shadow:0 12px 40px rgba(124,58,237,0.6); }
+.btn-secondary { background: var(--bg3); color: var(--text); border: 1px solid var(--border); }
+.btn-secondary:hover { border-color: var(--accent); background: var(--bg4); }
+.btn-gold { background: linear-gradient(135deg, #f59e0b, #d97706); color: #1a0a00; box-shadow: 0 8px 30px rgba(245,158,11,0.3); }
+.btn-gold:hover { transform:translateY(-2px); }
+.btn-danger { background:#ef4444; color:white; }
+.btn-danger:hover { background:#dc2626; }
+.btn-success { background:#22c55e; color:white; }
+.btn-sm { padding:8px 14px; font-size:13px; }
+.btn-xs { padding:6px 10px; font-size:12px; }
+.btn-full { width:100%; }
+
+#name-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+#name-screen.active { display:flex; }
+
+.name-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 40px;
+  width: 100%;
+  max-width: 420px;
+  text-align: center;
+  box-shadow: 0 0 80px rgba(124,58,237,0.2);
+}
+.name-card h2 {
+  font-family: 'Cinzel Decorative', serif;
+  font-size: 22px;
+  margin-bottom: 8px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.name-card p { color:var(--muted); margin-bottom:28px; font-size:14px; }
+
+.input-field {
+  width: 100%;
+  padding: 14px 18px;
+  background: var(--bg2);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  color: var(--text);
+  font-size: 16px;
+  font-family: 'Nunito', sans-serif;
+  outline: none;
+  margin-bottom: 16px;
+  transition: border-color 0.2s;
+  text-align: center;
+  font-weight: 700;
+}
+.input-field:focus { border-color: var(--accent); }
+
+.emoji-picker { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-bottom: 24px; }
+.emoji-opt {
+  font-size: 28px; padding: 8px; border-radius: 10px; cursor: pointer;
+  border: 2px solid transparent; background: var(--bg3); transition: all 0.15s; text-align: center;
+}
+.emoji-opt:hover { background:var(--bg4); transform:scale(1.1); }
+.emoji-opt.selected { border-color:var(--accent); background:rgba(124,58,237,0.2); }
+
+#app-screen { min-height: 100vh; display: flex; flex-direction: column; }
+#app-screen.active { display:flex; }
+
+.topbar {
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(10px);
+}
+.topbar-logo { font-family: 'Cinzel Decorative', serif; font-size: 15px; background: linear-gradient(135deg, #a78bfa, #60a5fa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.topbar-player { display:flex; align-items:center; gap:10px; }
+.topbar-avatar { font-size:26px; cursor:pointer; }
+.topbar-name { font-weight:800; font-size:14px; }
+.topbar-gems { display:flex; align-items:center; gap:6px; background:var(--bg3); border:1px solid var(--border); border-radius:20px; padding:6px 14px; font-weight:800; font-size:14px; }
+
+.navbar { background: var(--bg2); border-bottom: 1px solid var(--border); display: flex; overflow-x: auto; padding: 0 8px; }
+.nav-btn {
+  padding: 12px 18px; border: none; background: transparent; color: var(--muted); cursor: pointer;
+  font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 13px; white-space: nowrap;
+  border-bottom: 3px solid transparent; transition: all 0.2s; display: flex; align-items: center; gap: 5px;
+}
+.nav-btn:hover { color:var(--text); }
+.nav-btn.active { color:var(--accent); border-bottom-color:var(--accent); }
+
+.content { flex:1; padding:20px; max-width:1200px; margin:0 auto; width:100%; }
+
+.page { display:none; }
+.page.active { display:block; }
+
+.home-banner {
+  background: linear-gradient(135deg, #120a2e 0%, #0a1828 50%, #0d0a20 100%);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 30px;
+  margin-bottom: 24px;
+  position: relative;
+  overflow: hidden;
+  text-align: center;
+}
+.home-banner::before {
+  content:''; position:absolute; top:-100px; left:50%; transform:translateX(-50%);
+  width:600px; height:300px; background:radial-gradient(ellipse,rgba(124,58,237,0.15) 0%,transparent 70%); pointer-events:none;
+}
+.home-banner h2 { font-family:'Cinzel Decorative',serif; font-size:20px; margin-bottom:6px; }
+.home-banner p { color:var(--muted); font-size:14px; }
+
+.stats-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:14px; margin-bottom:24px; }
+.stat-box { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:18px; text-align:center; }
+.stat-box .icon { font-size:28px; margin-bottom:6px; }
+.stat-box .val { font-size:22px; font-weight:900; }
+.stat-box .lbl { font-size:12px; color:var(--muted); margin-top:2px; }
+
+.section-hdr { font-size:18px; font-weight:800; margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+
+.cards-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(155px,1fr)); gap:14px; }
+
+.card-wrap { position:relative; cursor:pointer; transition:transform 0.2s; border-radius:14px; overflow:hidden; aspect-ratio:2.5/3.5; }
+.card-wrap:hover { transform:translateY(-5px) scale(1.03); }
+.card-wrap.r-COMMON    { box-shadow:0 4px 12px rgba(0,0,0,0.5); }
+.card-wrap.r-UNCOMMON  { box-shadow:0 4px 18px rgba(52,211,153,0.4); }
+.card-wrap.r-RARE      { box-shadow:0 4px 22px rgba(96,165,250,0.5); }
+.card-wrap.r-EPIC      { box-shadow:0 4px 28px rgba(192,132,252,0.6); animation:glow-epic 2s ease-in-out infinite; }
+.card-wrap.r-LEGENDARY { box-shadow:0 6px 35px rgba(251,191,36,0.7); animation:glow-legendary 1.5s ease-in-out infinite; }
+.card-wrap.r-MYTHIC    { box-shadow:0 8px 45px rgba(251,113,133,0.8); animation:glow-mythic 1s ease-in-out infinite; }
+
+@keyframes glow-epic      { 0%,100%{box-shadow:0 4px 28px rgba(192,132,252,0.6)} 50%{box-shadow:0 8px 45px rgba(192,132,252,0.9)} }
+@keyframes glow-legendary { 0%,100%{box-shadow:0 6px 35px rgba(251,191,36,0.7)}  50%{box-shadow:0 12px 55px rgba(251,191,36,1)} }
+@keyframes glow-mythic    { 0%,100%{box-shadow:0 8px 45px rgba(251,113,133,0.8)} 50%{box-shadow:0 15px 65px rgba(251,113,133,1)} }
+
+.filter-bar { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:18px; align-items:center; }
+.search-inp { flex:1; min-width:180px; padding:10px 16px; background:var(--surface); border:1px solid var(--border); border-radius:10px; color:var(--text); font-family:'Nunito',sans-serif; font-size:14px; outline:none; }
+.search-inp:focus { border-color:var(--accent); }
+.filter-chip { padding:8px 14px; border:1px solid var(--border); background:var(--surface); color:var(--muted); border-radius:8px; cursor:pointer; font-family:'Nunito',sans-serif; font-size:12px; font-weight:700; transition:all 0.15s; }
+.filter-chip:hover { border-color:var(--accent); color:var(--text); }
+.filter-chip.on { background:var(--accent); color:white; border-color:var(--accent); }
+.coll-info { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:16px; }
+.info-tag { background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:6px 14px; font-size:13px; font-weight:700; }
+
+.packs-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:18px; }
+.pack-box { background:var(--surface); border:1px solid var(--border); border-radius:18px; padding:26px 20px; text-align:center; cursor:pointer; transition:transform 0.2s, box-shadow 0.2s; position:relative; overflow:hidden; }
+.pack-box:hover { transform:translateY(-4px); }
+.pack-box.p-daily    { border-color:#22c55e; box-shadow:0 0 20px rgba(34,197,94,0.15); }
+.pack-box.p-basic    { border-color:#6b7280; }
+.pack-box.p-premium  { border-color:#60a5fa; box-shadow:0 0 20px rgba(96,165,250,0.15); }
+.pack-box.p-epic     { border-color:#c084fc; box-shadow:0 0 25px rgba(192,132,252,0.2); }
+.pack-box.p-legendary{ border-color:#fbbf24; box-shadow:0 0 30px rgba(251,191,36,0.25); }
+.pack-box.p-mythic   { border-color:#fb7185; box-shadow:0 0 40px rgba(251,113,133,0.3); }
+.pack-box .p-icon { font-size:64px; margin-bottom:10px; display:block; }
+.pack-box .p-name { font-size:17px; font-weight:900; margin-bottom:6px; }
+.pack-box .p-desc { color:var(--muted); font-size:13px; margin-bottom:14px; line-height:1.5; }
+.pack-box .p-cost { font-size:19px; font-weight:900; margin-bottom:14px; }
+.pack-box .p-cost.free { color:var(--success); }
+.pack-box .p-cd { background:var(--bg3); border-radius:8px; padding:7px; font-size:12px; color:var(--muted); margin-bottom:10px; }
+
+#opening-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.97); z-index:1000; display:none; flex-direction:column; align-items:center; justify-content:center; padding:20px; }
+#opening-overlay.show { display:flex; }
+.opening-title { font-family:'Cinzel Decorative',serif; font-size:24px; margin-bottom:30px; text-align:center; }
+.opening-cards-row { display:flex; flex-wrap:wrap; gap:14px; justify-content:center; max-width:900px; }
+.oc { width:130px; aspect-ratio:2.5/3.5; border-radius:12px; opacity:0; transform:translateY(40px) rotateY(90deg); transition:all 0.55s cubic-bezier(0.34,1.56,0.64,1); cursor:pointer; }
+.oc.show { opacity:1; transform:translateY(0) rotateY(0); }
+.opening-btn-row { margin-top:28px; display:flex; gap:12px; }
+
+.duel-setup { background:var(--surface); border:1px solid var(--border); border-radius:18px; padding:28px; max-width:700px; margin:0 auto; }
+.duel-arena { display:none; max-width:900px; margin:0 auto; }
+.duel-arena.show { display:block; }
+.duel-field { display:grid; grid-template-columns:1fr auto 1fr; gap:20px; align-items:center; margin-bottom:24px; }
+.duel-side { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:20px; text-align:center; }
+.duel-card-slot { width:100%; max-width:160px; margin:0 auto 12px; aspect-ratio:2.5/3.5; border-radius:12px; overflow:hidden; }
+.duel-vs { font-family:'Cinzel Decorative',serif; font-size:28px; color:var(--accent); text-shadow:0 0 20px var(--accent); font-weight:900; }
+.duel-hp-bar { height:10px; background:var(--bg3); border-radius:5px; overflow:hidden; margin:8px 0; }
+.duel-hp-fill { height:100%; background:linear-gradient(90deg,#22c55e,#86efac); border-radius:5px; transition:width 0.5s; }
+.duel-hp-fill.low { background:linear-gradient(90deg,#ef4444,#fca5a5); }
+.duel-log { background:var(--bg2); border:1px solid var(--border); border-radius:12px; padding:16px; max-height:200px; overflow-y:auto; font-size:13px; line-height:1.8; margin-bottom:16px; }
+.log-line { padding:2px 0; }
+.log-line.win { color:var(--c-legendary); font-weight:700; }
+.log-line.lose { color:var(--danger); }
+.log-line.hit { color:var(--c-rare); }
+.log-line.crit { color:var(--c-epic); font-weight:700; }
+.log-line.miss { color:var(--muted); }
+
+.profile-header { background:var(--surface); border:1px solid var(--border); border-radius:18px; padding:28px; display:flex; align-items:center; gap:24px; margin-bottom:22px; }
+.big-avatar { font-size:72px; cursor:pointer; }
+.profile-name { font-size:24px; font-weight:900; }
+.profile-since { color:var(--muted); font-size:13px; margin-top:4px; }
+.profile-badges { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+.badge { padding:4px 10px; border-radius:20px; font-size:11px; font-weight:800; text-transform:uppercase; }
+.badge-level { background:rgba(124,58,237,0.2); color:var(--accent); border:1px solid var(--accent); }
+.profile-stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(110px,1fr)); gap:12px; margin-bottom:24px; }
+.ps-box { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:14px; text-align:center; }
+.ps-val { font-size:22px; font-weight:900; }
+.ps-lbl { font-size:11px; color:var(--muted); margin-top:2px; }
+.profile-section-title { font-size:16px; font-weight:800; margin-bottom:12px; }
+
+.overlay { position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:500; display:none; align-items:center; justify-content:center; padding:16px; }
+.overlay.show { display:flex; }
+.modal { background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:28px; width:100%; max-width:480px; max-height:90vh; overflow-y:auto; position:relative; }
+.modal-hdr { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
+.modal-hdr h2 { font-size:18px; font-weight:800; }
+.modal-close { background:none; border:none; color:var(--muted); cursor:pointer; font-size:22px; line-height:1; }
+.modal-close:hover { color:var(--text); }
+
+.card-detail { text-align:center; }
+.cd-img { width:180px; margin:0 auto 18px; aspect-ratio:2.5/3.5; border-radius:14px; overflow:hidden; }
+.cd-name { font-size:18px; font-weight:900; margin-bottom:6px; }
+.cd-rarity { font-size:13px; font-weight:700; margin-bottom:14px; }
+.cd-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:14px 0; }
+.cd-stat { background:var(--bg3); border-radius:10px; padding:10px; }
+.cd-stat .sv { font-size:18px; font-weight:900; }
+.cd-stat .sl { font-size:10px; color:var(--muted); margin-top:2px; }
+.cd-desc { color:var(--muted); font-size:13px; line-height:1.6; margin-top:10px; }
+.cd-id { font-size:11px; color:var(--muted); margin-top:8px; font-family:monospace; }
+
+#toasts { position:fixed; top:70px; right:16px; z-index:9999; display:flex; flex-direction:column; gap:8px; }
+.toast { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:12px 18px; font-size:14px; font-weight:700; max-width:300px; display:flex; align-items:center; gap:8px; animation:slideIn 0.3s ease; box-shadow:0 8px 30px rgba(0,0,0,0.5); }
+.toast.s { border-color:var(--success); }
+.toast.e { border-color:var(--danger); }
+.toast.i { border-color:var(--accent); }
+.toast.g { border-color:var(--gold); }
+@keyframes slideIn { from{transform:translateX(100%);opacity:0} to{transform:translateX(0);opacity:1} }
+
+.empty { text-align:center; padding:60px 20px; color:var(--muted); }
+.empty .ei { font-size:56px; margin-bottom:14px; }
+.empty h3 { font-size:18px; font-weight:800; color:var(--text); margin-bottom:8px; }
+
+.rc-COMMON    { color:var(--c-common);    }
+.rc-UNCOMMON  { color:var(--c-uncommon);  }
+.rc-RARE      { color:var(--c-rare);      }
+.rc-EPIC      { color:var(--c-epic);      }
+.rc-LEGENDARY { color:var(--c-legendary); }
+.rc-MYTHIC    { color:var(--c-mythic);    }
+
+select { padding:10px 14px; background:var(--bg3); border:1px solid var(--border); border-radius:10px; color:var(--text); font-family:'Nunito',sans-serif; font-size:14px; outline:none; cursor:pointer; }
+select:focus { border-color:var(--accent); }
+
+.confirm-reset-box { background:rgba(239,68,68,0.1); border:1px solid var(--danger); border-radius:12px; padding:16px; text-align:center; margin-top:20px; }
+
+@media(max-width:600px){
+  .cards-grid { grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); }
+  .packs-grid { grid-template-columns:1fr 1fr; }
+  .duel-field { grid-template-columns:1fr; }
+  .duel-vs { display:none; }
+  .profile-header { flex-direction:column; text-align:center; }
+}
+</style>
+</head>
+<body>
+
+<!-- TITLE SCREEN -->
+<div id="title-screen" class="screen active">
+  <div class="title-gems-orbit">
+    <div class="orbit-gem">💎</div>
+    <div class="orbit-gem">🔴</div>
+    <div class="orbit-gem">💚</div>
+    <div class="orbit-gem">💙</div>
+    <div class="orbit-gem">💜</div>
+    <div class="orbit-gem">🌟</div>
+    <div class="center-gem">✨</div>
+  </div>
+  <h1 class="game-title">Gemstone<br>Collector</h1>
+  <p class="game-subtitle">1005 cartes • Collectionne • Bats-toi</p>
+  <div class="title-buttons">
+    <button class="btn btn-primary" onclick="checkSave()">⚔️ Jouer</button>
+    <button class="btn btn-secondary" onclick="showHowTo()">📖 Comment jouer</button>
+  </div>
+  <p style="margin-top:24px;color:var(--muted);font-size:12px;">Aucun compte requis • Sauvegarde locale</p>
+</div>
+
+<!-- NAME SCREEN -->
+<div id="name-screen" class="screen">
+  <div class="name-card">
+    <h2>Nouveau Joueur</h2>
+    <p>Choisis ton avatar et ton nom de dresseur</p>
+    <div class="emoji-picker" id="emoji-picker"></div>
+    <input class="input-field" id="player-name-inp" placeholder="Ton pseudo..." maxlength="20" />
+    <button class="btn btn-primary btn-full" onclick="createPlayer()">✨ Commencer l'aventure</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app-screen" class="screen">
+  <div class="topbar">
+    <div class="topbar-logo">💎 Gemstone</div>
+    <div class="topbar-player">
+      <div class="topbar-gems">💎 <span id="gems-display">0</span></div>
+      <span class="topbar-avatar" id="topbar-avatar" onclick="goPage('profile')">💎</span>
+      <span class="topbar-name" id="topbar-name">Joueur</span>
+    </div>
+  </div>
+  <div class="navbar">
+    <button class="nav-btn active" onclick="goPage('home')" id="nav-home">🏠 Accueil</button>
+    <button class="nav-btn" onclick="goPage('collection')" id="nav-collection">📚 Collection</button>
+    <button class="nav-btn" onclick="goPage('packs')" id="nav-packs">🎁 Packs</button>
+    <button class="nav-btn" onclick="goPage('duel')" id="nav-duel">⚔️ Duel</button>
+    <button class="nav-btn" onclick="goPage('profile')" id="nav-profile">👤 Profil</button>
+  </div>
+  <div class="content">
+
+    <!-- HOME -->
+    <div class="page active" id="page-home">
+      <div class="home-banner">
+        <h2>Bienvenue, <span id="home-name">Dresseur</span>! 🌟</h2>
+        <p id="home-tip">Ouvre des packs pour agrandir ta collection</p>
+      </div>
+      <div class="stats-row" id="home-stats"></div>
+      <div class="section-hdr">🃏 Dernières cartes obtenues</div>
+      <div class="cards-grid" id="home-recent"></div>
+    </div>
+
+    <!-- COLLECTION -->
+    <div class="page" id="page-collection">
+      <div class="filter-bar">
+        <input class="search-inp" id="coll-search" placeholder="🔍 Rechercher..." oninput="renderCollection()">
+        <select id="coll-sort" onchange="renderCollection()">
+          <option value="date">Récents</option>
+          <option value="rarity">Rareté</option>
+          <option value="power">Puissance</option>
+          <option value="name">Nom</option>
+        </select>
+        <div id="rarity-filters"></div>
+      </div>
+      <div class="coll-info" id="coll-info"></div>
+      <div class="cards-grid" id="coll-grid"></div>
+    </div>
+
+    <!-- PACKS -->
+    <div class="page" id="page-packs">
+      <div class="packs-grid" id="packs-grid"></div>
+    </div>
+
+    <!-- DUEL -->
+    <div class="page" id="page-duel">
+      <div class="duel-setup" id="duel-setup">
+        <h2 style="font-family:'Cinzel Decorative',serif;font-size:20px;margin-bottom:8px;">⚔️ Duel de Cartes</h2>
+        <p style="color:var(--muted);font-size:14px;margin-bottom:24px;">Choisis ta carte pour affronter un adversaire aléatoire</p>
+        <div style="margin-bottom:16px;">
+          <label style="display:block;margin-bottom:8px;font-size:13px;color:var(--muted);font-weight:700;">SÉLECTIONNE TA CARTE</label>
+          <select id="duel-card-select" style="width:100%;" onchange="previewDuelCard()">
+            <option value="">-- Choisir une carte --</option>
+          </select>
+        </div>
+        <div id="duel-card-preview" style="margin-bottom:20px;"></div>
+        <button class="btn btn-gold btn-full" onclick="startDuel()">⚔️ Lancer le Duel!</button>
+      </div>
+      <div class="duel-arena" id="duel-arena">
+        <div class="duel-field" id="duel-field"></div>
+        <div class="duel-log" id="duel-log"></div>
+        <div style="display:flex;gap:10px;justify-content:center;" id="duel-btns"></div>
+      </div>
+    </div>
+
+    <!-- PROFILE -->
+    <div class="page" id="page-profile">
+      <div class="profile-header">
+        <div class="big-avatar" id="prof-avatar" onclick="openAvatarEdit()">💎</div>
+        <div>
+          <div class="profile-name" id="prof-name">Joueur</div>
+          <div class="profile-since" id="prof-since"></div>
+          <div class="profile-badges" id="prof-badges"></div>
+        </div>
+      </div>
+      <div class="profile-stats-grid" id="prof-stats"></div>
+      <div class="profile-section-title">🏆 Trophées & Records</div>
+      <div id="prof-trophies" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:24px;"></div>
+      <div class="profile-section-title">⚙️ Paramètres</div>
+      <div class="confirm-reset-box">
+        <p style="margin-bottom:12px;font-size:14px;">Supprimer toutes tes données de sauvegarde</p>
+        <button class="btn btn-danger btn-sm" onclick="confirmReset()">🗑️ Réinitialiser la partie</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- PACK OPENING -->
+<div id="opening-overlay">
+  <div class="opening-title" id="opening-title">📦 Ouverture du Pack!</div>
+  <div class="opening-cards-row" id="opening-cards"></div>
+  <div class="opening-btn-row">
+    <button class="btn btn-secondary" onclick="closeOpening()">✅ Terminer</button>
+  </div>
+</div>
+
+<!-- CARD MODAL -->
+<div class="overlay" id="card-modal">
+  <div class="modal">
+    <div class="modal-hdr">
+      <h2>Détail de la carte</h2>
+      <button class="modal-close" onclick="closeModal('card-modal')">✕</button>
+    </div>
+    <div class="card-detail" id="card-detail-content"></div>
+  </div>
+</div>
+
+<!-- AVATAR EDIT -->
+<div class="overlay" id="avatar-modal">
+  <div class="modal">
+    <div class="modal-hdr">
+      <h2>Changer d'avatar</h2>
+      <button class="modal-close" onclick="closeModal('avatar-modal')">✕</button>
+    </div>
+    <div class="emoji-picker" id="avatar-picker-grid"></div>
+    <button class="btn btn-primary btn-full" style="margin-top:12px;" onclick="saveAvatar()">Sauvegarder</button>
+  </div>
+</div>
+
+<!-- HOW TO -->
+<div class="overlay" id="howto-modal">
+  <div class="modal">
+    <div class="modal-hdr">
+      <h2>📖 Comment jouer</h2>
+      <button class="modal-close" onclick="closeModal('howto-modal')">✕</button>
+    </div>
+    <div style="font-size:14px;line-height:1.9;color:var(--muted);">
+      <p>💎 <strong style="color:var(--text)">Gems</strong> — La monnaie du jeu. Commence avec <strong>500</strong>.</p><br>
+      <p>🎁 <strong style="color:var(--text)">Packs</strong> — Ouvre des packs pour obtenir des cartes. Le pack <strong>Daily</strong> est gratuit toutes les 24h.</p><br>
+      <p>📚 <strong style="color:var(--text)">Collection</strong> — Consulte toutes tes cartes. 1005 cartes différentes à collectionner !</p><br>
+      <p>⚔️ <strong style="color:var(--text)">Duel</strong> — Affronte des adversaires générés aléatoirement avec ta meilleure carte. Gagne des gems !</p><br>
+      <p>🌈 <strong style="color:var(--text)">Raretés</strong> — Commun → Peu Commun → Rare → Épique → Légendaire → Mythique</p><br>
+      <p>💾 <strong style="color:var(--text)">Sauvegarde</strong> — Automatique dans ton navigateur. Aucun compte requis.</p>
+    </div>
+  </div>
+</div>
+
+<div id="toasts"></div>
+
+<script>
+const RARITIES = {
+  COMMON:    { name:'Commun',     color:'#9ca3af', stars:1, weight:50  },
+  UNCOMMON:  { name:'Peu Commun', color:'#34d399', stars:2, weight:30  },
+  RARE:      { name:'Rare',       color:'#60a5fa', stars:3, weight:12  },
+  EPIC:      { name:'Épique',     color:'#c084fc', stars:4, weight:6   },
+  LEGENDARY: { name:'Légendaire', color:'#fbbf24', stars:5, weight:1.8 },
+  MYTHIC:    { name:'Mythique',   color:'#fb7185', stars:6, weight:0.2 }
+};
+
+const GEMS = ['Diamant','Rubis','Émeraude','Saphir','Opale','Améthyste','Topaze','Perle','Jade','Onyx','Grenat','Turquoise','Lapis-Lazuli','Alexandrite','Tanzanite','Spinelle','Zircon','Corail','Ambre','Obsidienne','Malachite','Chrysoprase','Labradorite','Moonstone','Sunstone','Larimar','Charoïte','Sugilite','Moldavite','Diamant Noir'];
+const ANIMALS = ['Dragon','Phénix','Licorne','Griffon','Wyverne','Basilic','Chimère','Pégase','Léviathan','Hydre','Roc','Kirin','Kraken','Manticore','Sphinx','Naga','Aigle','Lion','Tigre','Loup','Ours','Requin','Baleine','Dauphin','Faucon','Corbeau','Hibou','Jaguar','Léopard','Panthère','Gazelle','Cerf','Cheval','Taureau','Éléphant','Rhinocéros','Hippopotame','Crocodile','Tortue','Cobra','Mamba','Narval','Orque','Raie Manta','Pieuvre','Calmar','Méduse','Ara','Toucan','Flamant','Paon','Colibri','Pélican','Albatros','Panda','Koala','Kangourou','Okapi','Axolotl','Quetzal'];
+const ELEMENTS = ['Feu','Eau','Terre','Air','Lumière','Ombre','Foudre','Glace','Poison','Arcane'];
+const PREFIXES = ['Ancien','Céleste','Divin','Éternel','Mystique','Sacré','Maudit','Béni','Primordial','Astral','Cosmique','Infernal','Spectral','Cristallin','Runique','Immortel','Obscur','Radieux','Tempétueux','Glacial','Volcanique','Abyssal','Puissant','Noble','Royal','Impérial','Suprême','Ultime','Sombre','Lumineux','Sauvage','Ancestral','Transcendant'];
+const GEM_COLORS = {'Diamant':'#e8f4f8','Rubis':'#e53935','Émeraude':'#43a047','Saphir':'#1e88e5','Opale':'#ff7043','Améthyste':'#8e24aa','Topaze':'#fdd835','Perle':'#f5f5f5','Jade':'#66bb6a','Onyx':'#333','Grenat':'#b71c1c','Turquoise':'#26c6da','Lapis-Lazuli':'#283593','Alexandrite':'#6a1b9a','Tanzanite':'#4a148c','Spinelle':'#c62828','Zircon':'#0288d1','Corail':'#ff5722','Ambre':'#ff8f00','Obsidienne':'#1a1a2e','Malachite':'#2e7d32','Chrysoprase':'#558b2f','Labradorite':'#546e7a','Moonstone':'#b0bec5','Sunstone':'#f57f17','Larimar':'#00acc1','Charoïte':'#6a1b9a','Sugilite':'#7b1fa2','Moldavite':'#1b5e20','Diamant Noir':'#111'};
+const ELEMENT_ICONS = {'Feu':'🔥','Eau':'💧','Terre':'🌍','Air':'💨','Lumière':'✨','Ombre':'🌑','Foudre':'⚡','Glace':'❄️','Poison':'☠️','Arcane':'🔮'};
+const AVATARS = ['💎','🔮','⚗️','🌟','🦋','🐉','🦅','🌙','☄️','🌊','🔥','❄️','⚡','🌸','🦁','🐺','🦊','🦄','🐦','🦎'];
+
+function genCards() {
+  const cards = []; let id = 1;
+  for (const gem of GEMS) {
+    for (const animal of ANIMALS) {
+      if (id > 1005) break;
+      const idx = id - 1;
+      const v = idx % 100;
+      let rk = v<50?'COMMON':v<80?'UNCOMMON':v<92?'RARE':v<98?'EPIC':v<99?'LEGENDARY':'MYTHIC';
+      const el = ELEMENTS[idx % ELEMENTS.length];
+      const pfx = PREFIXES[id % PREFIXES.length];
+      const pow = {COMMON:10+id%20,UNCOMMON:30+id%30,RARE:60+id%40,EPIC:100+id%50,LEGENDARY:150+id%60,MYTHIC:210+id%100}[rk];
+      cards.push({
+        id:`GEM-${String(id).padStart(4,'0')}`, numId:id,
+        name:`${pfx} ${animal} de ${gem}`,
+        gem, animal, element:el, rarity:rk,
+        power:pow, attack:Math.floor(pow*0.6), defense:Math.floor(pow*0.4), hp:pow*2,
+        desc:`Un ${animal} dont l'essence est liée au ${gem}. Maîtrise l'élément ${el}.`,
+        gemColor:GEM_COLORS[gem]||'#555',
+        elIcon:ELEMENT_ICONS[el]||'⭐',
+        value:{COMMON:10,UNCOMMON:50,RARE:200,EPIC:1000,LEGENDARY:5000,MYTHIC:25000}[rk]+pow*10
+      });
+      id++;
+    }
+  }
+  return cards;
+}
+
+const ALL_CARDS = genCards();
+const CARD_MAP = {};
+ALL_CARDS.forEach(c => CARD_MAP[c.id] = c);
+
+let SAVE = null;
+const SAVE_KEY = 'gemstone_solo_v1';
+
+function defaultSave(name, emoji) {
+  return {
+    name, emoji, gems:500,
+    cards: [],
+    totalPacks:0, totalDuels:0, duelWins:0,
+    packHistory:[],
+    dailyPackUsed:null,
+    createdAt: new Date().toISOString(),
+    gemsEarned:500, gemsSpent:0,
+  };
+}
+
+function loadSave() {
+  try { const s = localStorage.getItem(SAVE_KEY); return s ? JSON.parse(s) : null; }
+  catch { return null; }
+}
+
+function writeSave() { localStorage.setItem(SAVE_KEY, JSON.stringify(SAVE)); }
+
+const PACKS = [
+  { id:'daily',     name:'Daily Pack',        icon:'🌅', desc:'Un pack gratuit disponible toutes les 24 heures', cost:0,     count:3, guaranteed:null,       class:'p-daily'     },
+  { id:'basic',     name:'Pack Commun',        icon:'📦', desc:'5 cartes aléatoires',                             cost:100,   count:5, guaranteed:null,       class:'p-basic'     },
+  { id:'premium',   name:'Pack Avancé',        icon:'💠', desc:'5 cartes avec au moins 1 Rare garantie',          cost:500,   count:5, guaranteed:'RARE',     class:'p-premium'   },
+  { id:'epic',      name:'Pack Épique',        icon:'🔮', desc:'5 cartes avec au moins 1 Épique garantie',        cost:2000,  count:5, guaranteed:'EPIC',     class:'p-epic'      },
+  { id:'legendary', name:'Pack Légendaire',    icon:'⭐', desc:'3 cartes avec au moins 1 Légendaire garantie',    cost:10000, count:3, guaranteed:'LEGENDARY', class:'p-legendary' },
+  { id:'mythic',    name:'Pack Mythique',      icon:'💫', desc:'1 carte Mythique garantie',                       cost:50000, count:1, guaranteed:'MYTHIC',   class:'p-mythic'    }
+];
+
+function gradients(card) {
+  const m = {COMMON:'#37474f,#263238',UNCOMMON:'#1b5e20,#2e7d32',RARE:'#0d47a1,#1565c0',EPIC:'#4a148c,#6a1b9a',LEGENDARY:'#e65100,#bf360c',MYTHIC:'#7f0000,#b71c1c'};
+  const [a,b] = (m[card.rarity]||'#333,#111').split(',');
+  return [a, b];
+}
+
+function renderCardSVG(card, w=200, h=280) {
+  const holo = ['EPIC','LEGENDARY','MYTHIC'].includes(card.rarity);
+  const rc = RARITIES[card.rarity]?.color||'#999';
+  const [c1, c2] = gradients(card);
+  return `
+<svg width="${w}" height="${h}" viewBox="0 0 200 280" xmlns="http://www.w3.org/2000/svg" style="border-radius:12px;display:block;">
+  <defs>
+    <linearGradient id="cg${card.numId}" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="${c1}"/>
+      <stop offset="50%" stop-color="${card.gemColor}" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="${c2}"/>
+    </linearGradient>
+    ${holo ? `<linearGradient id="holo${card.numId}" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="${rc}" stop-opacity="0.15"/>
+      <stop offset="50%" stop-color="#ffffff" stop-opacity="0.05"/>
+      <stop offset="100%" stop-color="${rc}" stop-opacity="0.15"/>
+    </linearGradient>` : ''}
+    <radialGradient id="glow${card.numId}" cx="50%" cy="40%" r="50%">
+      <stop offset="0%" stop-color="${card.gemColor}" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="transparent" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="200" height="280" rx="12" fill="url(#cg${card.numId})"/>
+  ${holo ? `<rect width="200" height="280" rx="12" fill="url(#holo${card.numId})"/>` : ''}
+  <ellipse cx="100" cy="110" rx="80" ry="60" fill="url(#glow${card.numId})"/>
+  <rect x="2" y="2" width="196" height="276" rx="11" fill="none" stroke="${rc}" stroke-width="2" opacity="0.7"/>
+  <rect x="8" y="8" width="184" height="180" rx="8" fill="rgba(0,0,0,0.3)" stroke="${rc}" stroke-width="0.5" opacity="0.5"/>
+  <text x="100" y="95" text-anchor="middle" font-size="52" style="user-select:none;">💎</text>
+  <text x="100" y="155" text-anchor="middle" font-size="22">${card.elIcon}</text>
+  <rect x="6" y="192" width="188" height="32" rx="4" fill="rgba(0,0,0,0.5)"/>
+  <text x="100" y="213" text-anchor="middle" font-size="8.5" fill="white" font-family="Nunito,sans-serif" font-weight="700">${card.name.length>26?card.name.substring(0,26)+'…':card.name}</text>
+  <text x="100" y="237" text-anchor="middle" font-size="10" fill="${rc}">${'★'.repeat(RARITIES[card.rarity]?.stars||1)}</text>
+  <rect x="6" y="244" width="58" height="26" rx="4" fill="rgba(0,0,0,0.5)"/>
+  <rect x="71" y="244" width="58" height="26" rx="4" fill="rgba(0,0,0,0.5)"/>
+  <rect x="136" y="244" width="58" height="26" rx="4" fill="rgba(0,0,0,0.5)"/>
+  <text x="35" y="252" text-anchor="middle" font-size="7" fill="#ff9999" font-family="Nunito,sans-serif" font-weight="700">ATK</text>
+  <text x="35" y="264" text-anchor="middle" font-size="9" fill="white" font-family="Nunito,sans-serif" font-weight="900">${card.attack}</text>
+  <text x="100" y="252" text-anchor="middle" font-size="7" fill="#99ff99" font-family="Nunito,sans-serif" font-weight="700">DEF</text>
+  <text x="100" y="264" text-anchor="middle" font-size="9" fill="white" font-family="Nunito,sans-serif" font-weight="900">${card.defense}</text>
+  <text x="165" y="252" text-anchor="middle" font-size="7" fill="#9999ff" font-family="Nunito,sans-serif" font-weight="700">PV</text>
+  <text x="165" y="264" text-anchor="middle" font-size="9" fill="white" font-family="Nunito,sans-serif" font-weight="900">${card.hp}</text>
+  <text x="100" y="276" text-anchor="middle" font-size="6" fill="rgba(255,255,255,0.4)" font-family="monospace">${card.id}</text>
+</svg>`;
+}
+
+function cardWrapHTML(card, instanceId, onclick='') {
+  return `<div class="card-wrap r-${card.rarity}" onclick="${onclick}" title="${card.name}">${renderCardSVG(card)}</div>`;
+}
+
+let currentPage = 'home';
+let selectedAvatar = '💎';
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function goPage(p) {
+  currentPage = p;
+  document.querySelectorAll('.page').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(x => x.classList.remove('active'));
+  document.getElementById(`page-${p}`).classList.add('active');
+  document.getElementById(`nav-${p}`).classList.add('active');
+  if (p==='home') renderHome();
+  if (p==='collection') renderCollection();
+  if (p==='packs') renderPacks();
+  if (p==='duel') initDuelPage();
+  if (p==='profile') renderProfile();
+}
+
+function checkSave() {
+  const s = loadSave();
+  if (s) { SAVE = s; startApp(); }
+  else showNameScreen();
+}
+
+function showNameScreen() {
+  showScreen('name-screen');
+  const ep = document.getElementById('emoji-picker');
+  ep.innerHTML = AVATARS.map((e,i) => `<div class="emoji-opt${i===0?' selected':''}" onclick="selectEmoji('${e}',this)">${e}</div>`).join('');
+  selectedAvatar = AVATARS[0];
+}
+
+function selectEmoji(e, el) {
+  selectedAvatar = e;
+  document.querySelectorAll('#emoji-picker .emoji-opt').forEach(x=>x.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function createPlayer() {
+  const name = document.getElementById('player-name-inp').value.trim();
+  if (!name) return toast('Entre un pseudo!','e');
+  if (name.length < 2 || name.length > 20) return toast('Pseudo: 2-20 caractères','e');
+  SAVE = defaultSave(name, selectedAvatar);
+  ['COMMON','COMMON','UNCOMMON'].forEach((r,i) => {
+    const pool = ALL_CARDS.filter(c=>c.rarity===r);
+    const card = pool[Math.floor(Math.random()*pool.length)];
+    SAVE.cards.push({cardId:card.id, instanceId:`start_${i}_${Date.now()}`, obtainedAt:new Date().toISOString(), source:'starter'});
+  });
+  writeSave();
+  startApp();
+  toast(`Bienvenue ${name}! Tu as 500 gems et 3 cartes de départ! 🎉`,'s',5000);
+}
+
+function startApp() {
+  showScreen('app-screen');
+  document.getElementById('topbar-avatar').textContent = SAVE.emoji;
+  document.getElementById('topbar-name').textContent = SAVE.name;
+  updateGems();
+  renderHome();
+}
+
+function updateGems() {
+  document.getElementById('gems-display').textContent = (SAVE.gems||0).toLocaleString();
+}
+
+function renderHome() {
+  document.getElementById('home-name').textContent = SAVE.name;
+  const nc = SAVE.cards.length;
+  const rarities = {};
+  SAVE.cards.forEach(ci => { const c = CARD_MAP[ci.cardId]; if(c) rarities[c.rarity]=(rarities[c.rarity]||0)+1; });
+  const legendary = (rarities.LEGENDARY||0)+(rarities.MYTHIC||0);
+  document.getElementById('home-stats').innerHTML = `
+    <div class="stat-box"><div class="icon">📚</div><div class="val">${nc}</div><div class="lbl">Cartes</div></div>
+    <div class="stat-box"><div class="icon">💎</div><div class="val">${(SAVE.gems||0).toLocaleString()}</div><div class="lbl">Gems</div></div>
+    <div class="stat-box"><div class="icon">🎁</div><div class="val">${SAVE.totalPacks||0}</div><div class="lbl">Packs ouverts</div></div>
+    <div class="stat-box"><div class="icon">⭐</div><div class="val">${legendary}</div><div class="lbl">Légendaires+</div></div>
+    <div class="stat-box"><div class="icon">⚔️</div><div class="val">${SAVE.duelWins||0}/${SAVE.totalDuels||0}</div><div class="lbl">Victoires</div></div>
+  `;
+  const tips = ['Ouvre des packs pour agrandir ta collection!','Les cartes Mythiques valent 25 000 gems!','Le pack Daily est gratuit toutes les 24h!','Plus la rareté est haute, plus la carte est puissante!','Duel: choisis ta carte la plus puissante!'];
+  document.getElementById('home-tip').textContent = tips[Math.floor(Math.random()*tips.length)];
+  const recent = [...SAVE.cards].reverse().slice(0,8);
+  if (recent.length === 0) {
+    document.getElementById('home-recent').innerHTML = '<p style="color:var(--muted);font-size:14px;">Ouvre des packs pour obtenir tes premières cartes!</p>';
+  } else {
+    document.getElementById('home-recent').innerHTML = recent.map(ci => {
+      const c = CARD_MAP[ci.cardId]; if(!c) return '';
+      return cardWrapHTML(c, ci.instanceId, `openCardModal('${ci.cardId}')`);
+    }).join('');
+  }
+}
+
+let activeRarityFilters = new Set();
+
+function renderCollection() {
+  const search = document.getElementById('coll-search').value.toLowerCase();
+  const sort = document.getElementById('coll-sort').value;
+  document.getElementById('rarity-filters').innerHTML = Object.entries(RARITIES).map(([rk,rv]) =>
+    `<button class="filter-chip${activeRarityFilters.has(rk)?' on':''}" onclick="toggleRarity('${rk}')" style="color:${rv.color}">${rv.name}</button>`
+  ).join('');
+  let items = SAVE.cards.map(ci => ({ ci, card:CARD_MAP[ci.cardId] })).filter(x=>x.card);
+  if (search) items = items.filter(x => x.card.name.toLowerCase().includes(search) || x.card.gem.toLowerCase().includes(search) || x.card.animal.toLowerCase().includes(search));
+  if (activeRarityFilters.size > 0) items = items.filter(x => activeRarityFilters.has(x.card.rarity));
+  const rarOrder = {MYTHIC:0,LEGENDARY:1,EPIC:2,RARE:3,UNCOMMON:4,COMMON:5};
+  if (sort==='rarity') items.sort((a,b)=>rarOrder[a.card.rarity]-rarOrder[b.card.rarity]);
+  else if (sort==='power') items.sort((a,b)=>b.card.power-a.card.power);
+  else if (sort==='name') items.sort((a,b)=>a.card.name.localeCompare(b.card.name));
+  else items.sort((a,b)=>new Date(b.ci.obtainedAt)-new Date(a.ci.obtainedAt));
+  const uniqueIds = new Set(SAVE.cards.map(ci=>ci.cardId));
+  const rar = {};
+  SAVE.cards.forEach(ci=>{const c=CARD_MAP[ci.cardId];if(c)rar[c.rarity]=(rar[c.rarity]||0)+1;});
+  document.getElementById('coll-info').innerHTML = `
+    <span class="info-tag">📚 ${SAVE.cards.length} cartes</span>
+    <span class="info-tag">🗃️ ${uniqueIds.size} uniques</span>
+    <span class="info-tag">🎯 ${((uniqueIds.size/1005)*100).toFixed(1)}% complété</span>
+    ${Object.entries(rar).map(([r,n])=>`<span class="info-tag rc-${r}">${n}x ${RARITIES[r]?.name||r}</span>`).join('')}
+  `;
+  if (items.length === 0) {
+    document.getElementById('coll-grid').innerHTML = `<div class="empty" style="grid-column:1/-1;"><div class="ei">📭</div><h3>Aucune carte</h3><p>Ouvre des packs ou change tes filtres</p></div>`;
+    return;
+  }
+  document.getElementById('coll-grid').innerHTML = items.map(({ci,card}) => cardWrapHTML(card, ci.instanceId, `openCardModal('${card.id}')`)).join('');
+}
+
+function toggleRarity(rk) {
+  if (activeRarityFilters.has(rk)) activeRarityFilters.delete(rk);
+  else activeRarityFilters.add(rk);
+  renderCollection();
+}
+
+function renderPacks() {
+  const now = Date.now();
+  const dailyCd = SAVE.dailyPackUsed ? Math.max(0, 86400000-(now-new Date(SAVE.dailyPackUsed).getTime())) : 0;
+  document.getElementById('packs-grid').innerHTML = PACKS.map(pk => {
+    const isDaily = pk.id === 'daily';
+    const cdLeft = isDaily ? dailyCd : 0;
+    const cdStr = cdLeft > 0 ? `⏳ ${Math.floor(cdLeft/3600000)}h ${Math.floor((cdLeft%3600000)/60000)}m` : '';
+    const canBuy = isDaily ? cdLeft===0 : SAVE.gems >= pk.cost;
+    return `<div class="pack-box ${pk.class}" onclick="openPack('${pk.id}')">
+      <span class="p-icon">${pk.icon}</span>
+      <div class="p-name">${pk.name}</div>
+      <div class="p-desc">${pk.desc}</div>
+      ${cdStr ? `<div class="p-cd">${cdStr}</div>` : ''}
+      <div class="p-cost ${isDaily?'free'}">${isDaily?'GRATUIT':'💎 '+pk.cost.toLocaleString()}</div>
+      <button class="btn ${canBuy?'btn-primary':'btn-secondary'} btn-full btn-sm" ${!canBuy?'disabled':''}>
+        ${!canBuy&&!isDaily?'Gems insuffisants':cdLeft>0?'Cooldown...':'Ouvrir'}
+      </button>
+    </div>`;
+  }).join('');
+}
+
+function rollRarity(guaranteed) {
+  if (guaranteed) {
+    const rarOrder = {COMMON:0,UNCOMMON:1,RARE:2,EPIC:3,LEGENDARY:4,MYTHIC:5};
+    const keys = Object.keys(rarOrder);
+    const totalW = keys.filter(k=>rarOrder[k]>=rarOrder[guaranteed]).reduce((s,k)=>s+RARITIES[k].weight,0);
+    let r = Math.random()*totalW;
+    for (const k of keys) {
+      if (rarOrder[k] < rarOrder[guaranteed]) continue;
+      r -= RARITIES[k].weight;
+      if (r <= 0) return k;
+    }
+    return guaranteed;
+  }
+  const total = Object.values(RARITIES).reduce((s,v)=>s+v.weight,0);
+  let r = Math.random()*total;
+  for (const [k,v] of Object.entries(RARITIES)) { r -= v.weight; if (r <= 0) return k; }
+  return 'COMMON';
+}
+
+function openPack(packId) {
+  const pk = PACKS.find(p=>p.id===packId);
+  if (!pk) return;
+  const now = Date.now();
+  if (packId === 'daily') {
+    const cdLeft = SAVE.dailyPackUsed ? Math.max(0, 86400000-(now-new Date(SAVE.dailyPackUsed).getTime())) : 0;
+    if (cdLeft > 0) return toast(`Pack daily dans ${Math.floor(cdLeft/3600000)}h ${Math.floor((cdLeft%3600000)/60000)}m`,'i');
+  } else {
+    if (SAVE.gems < pk.cost) return toast('Pas assez de gems!','e');
+    SAVE.gems -= pk.cost;
+    SAVE.gemsSpent = (SAVE.gemsSpent||0) + pk.cost;
+  }
+  const drawn = [];
+  for (let i=0; i<pk.count; i++) {
+    const rk = (i===0&&pk.guaranteed) ? rollRarity(pk.guaranteed) : rollRarity(null);
+    const pool = ALL_CARDS.filter(c=>c.rarity===rk);
+    const card = pool[Math.floor(Math.random()*pool.length)];
+    const inst = { cardId:card.id, instanceId:`${packId}_${Date.now()}_${i}`, obtainedAt:new Date().toISOString(), source:packId };
+    SAVE.cards.push(inst);
+    drawn.push({card, inst});
+  }
+  if (packId==='daily') SAVE.dailyPackUsed = new Date().toISOString();
+  SAVE.totalPacks = (SAVE.totalPacks||0)+1;
+  updateGems();
+  writeSave();
+  showPackOpening(drawn, pk.name);
+}
+
+function showPackOpening(drawn, packName) {
+  document.getElementById('opening-title').textContent = `🎁 ${packName}`;
+  document.getElementById('opening-cards').innerHTML = drawn.map(({card},i) =>
+    `<div class="oc" id="oc${i}">${renderCardSVG(card,130,182)}</div>`
+  ).join('');
+  document.getElementById('opening-overlay').classList.add('show');
+  drawn.forEach((_,i) => setTimeout(()=>document.getElementById(`oc${i}`)?.classList.add('show'), 200+i*300));
+  const special = drawn.filter(d=>['EPIC','LEGENDARY','MYTHIC'].includes(d.card.rarity));
+  if (special.length>0) setTimeout(()=>special.forEach(d=>toast(`✨ ${d.card.name} (${RARITIES[d.card.rarity].name})!`,'g',4000)),1200);
+}
+
+function closeOpening() {
+  document.getElementById('opening-overlay').classList.remove('show');
+  renderPacks();
+  if (currentPage==='home') renderHome();
+}
+
+let duelState = null;
+
+function initDuelPage() {
+  document.getElementById('duel-setup').style.display='block';
+  document.getElementById('duel-arena').classList.remove('show');
+  const sel = document.getElementById('duel-card-select');
+  sel.innerHTML = '<option value="">-- Choisir une carte --</option>';
+  const rarO = {MYTHIC:0,LEGENDARY:1,EPIC:2,RARE:3,UNCOMMON:4,COMMON:5};
+  const sorted = [...SAVE.cards].sort((a,b)=>{
+    const ca=CARD_MAP[a.cardId], cb=CARD_MAP[b.cardId];
+    return rarO[ca?.rarity||'COMMON']-rarO[cb?.rarity||'COMMON'] || (cb?.power||0)-(ca?.power||0);
+  });
+  sorted.forEach(ci=>{
+    const c=CARD_MAP[ci.cardId]; if(!c) return;
+    const opt=document.createElement('option');
+    opt.value=ci.instanceId;
+    opt.textContent=`${c.name} [${RARITIES[c.rarity]?.name||c.rarity}] — PW:${c.power}`;
+    sel.appendChild(opt);
+  });
+  document.getElementById('duel-card-preview').innerHTML='';
+}
+
+function previewDuelCard() {
+  const sel = document.getElementById('duel-card-select').value;
+  const ci = SAVE.cards.find(c=>c.instanceId===sel);
+  const card = ci ? CARD_MAP[ci.cardId] : null;
+  const el = document.getElementById('duel-card-preview');
+  if (!card) { el.innerHTML=''; return; }
+  el.innerHTML = `<div style="display:flex;align-items:center;gap:16px;background:var(--bg3);border-radius:12px;padding:12px;">
+    <div style="width:80px;aspect-ratio:2.5/3.5;border-radius:8px;overflow:hidden;flex-shrink:0;">${renderCardSVG(card,80,112)}</div>
+    <div><div style="font-weight:900;margin-bottom:4px;">${card.name}</div>
+    <div class="rc-${card.rarity}" style="font-size:13px;font-weight:700;">${RARITIES[card.rarity]?.name}</div>
+    <div style="color:var(--muted);font-size:12px;margin-top:6px;">⚔️ ATK:${card.attack} &nbsp; 🛡️ DEF:${card.defense} &nbsp; ❤️ HP:${card.hp}</div></div>
+  </div>`;
+}
+
+function genEnemy(playerCard) {
+  const rarOrder = ['COMMON','UNCOMMON','RARE','EPIC','LEGENDARY','MYTHIC'];
+  const pi = rarOrder.indexOf(playerCard.rarity);
+  const ei = Math.max(0, Math.min(5, pi + (Math.random()<0.4?1:Math.random()<0.4?-1:0)));
+  const pool = ALL_CARDS.filter(c=>c.rarity===rarOrder[ei]);
+  return pool[Math.floor(Math.random()*pool.length)];
+}
+
+function startDuel() {
+  const sel = document.getElementById('duel-card-select').value;
+  const ci = SAVE.cards.find(c=>c.instanceId===sel);
+  const pCard = ci ? CARD_MAP[ci.cardId] : null;
+  if (!pCard) return toast('Choisis une carte!','e');
+  const eCard = genEnemy(pCard);
+  duelState = {
+    player: { card:pCard, hp:pCard.hp, maxHp:pCard.hp },
+    enemy:  { card:eCard, hp:eCard.hp, maxHp:eCard.hp },
+    turn: 1, log: [], over: false
+  };
+  document.getElementById('duel-setup').style.display='none';
+  document.getElementById('duel-arena').classList.add('show');
+  renderDuelField();
+  addLog(`⚔️ Duel: <strong>${pCard.name}</strong> vs <strong>${eCard.name}</strong>`, '');
+  renderDuelBtns();
+}
+
+function renderDuelField() {
+  const s = duelState;
+  const pPct = Math.max(0,(s.player.hp/s.player.maxHp)*100);
+  const ePct = Math.max(0,(s.enemy.hp/s.enemy.maxHp)*100);
+  document.getElementById('duel-field').innerHTML = `
+    <div class="duel-side">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:4px;">TON ÉQUIPE</div>
+      <div class="duel-card-slot">${renderCardSVG(s.player.card,160,224)}</div>
+      <div style="font-size:13px;font-weight:800;margin-bottom:4px;">${s.player.card.name}</div>
+      <div class="duel-hp-bar"><div class="duel-hp-fill${pPct<30?' low':''}" style="width:${pPct}%"></div></div>
+      <div style="font-size:12px;color:var(--muted);">❤️ ${s.player.hp}/${s.player.maxHp}</div>
+    </div>
+    <div class="duel-vs">VS</div>
+    <div class="duel-side">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:4px;">ADVERSAIRE</div>
+      <div class="duel-card-slot">${renderCardSVG(s.enemy.card,160,224)}</div>
+      <div style="font-size:13px;font-weight:800;margin-bottom:4px;">${s.enemy.card.name}</div>
+      <div class="duel-hp-bar"><div class="duel-hp-fill${ePct<30?' low':''}" style="width:${ePct}%"></div></div>
+      <div style="font-size:12px;color:var(--muted);">❤️ ${s.enemy.hp}/${s.enemy.maxHp}</div>
+    </div>`;
+}
+
+function addLog(text, cls='') {
+  duelState.log.push({text,cls});
+  const el = document.getElementById('duel-log');
+  el.innerHTML = duelState.log.map(l=>`<div class="log-line ${l.cls}">${l.text}</div>`).join('');
+  el.scrollTop = el.scrollHeight;
+}
+
+function calcDmg(attacker, defender, isCrit) {
+  const base = attacker.card.attack - Math.floor(defender.card.defense * 0.3);
+  const dmg = Math.max(1, base + Math.floor(Math.random()*10)-5);
+  return isCrit ? Math.floor(dmg * 1.8) : dmg;
+}
+
+function duelAttack() {
+  if (duelState.over) return;
+  const isCrit = Math.random() < 0.2;
+  const miss = Math.random() < 0.05;
+  if (miss) {
+    addLog(`Tour ${duelState.turn}: 💨 Attaque manquée!`,'miss');
+  } else {
+    const dmg = calcDmg(duelState.player, duelState.enemy, isCrit);
+    duelState.enemy.hp = Math.max(0, duelState.enemy.hp - dmg);
+    addLog(`Tour ${duelState.turn}: ${isCrit?'💥 CRITIQUE! ':''}<strong>${duelState.player.card.name}</strong> inflige <strong>${dmg}</strong> dégâts!`, isCrit?'crit':'hit');
+  }
+  if (duelState.enemy.hp <= 0) { endDuel(true); return; }
+  setTimeout(()=>{
+    const eCrit = Math.random()<0.2;
+    const eMiss = Math.random()<0.05;
+    if (eMiss) {
+      addLog(`Tour ${duelState.turn}: ennemi rate son attaque!`,'miss');
+    } else {
+      const edm = calcDmg(duelState.enemy, duelState.player, eCrit);
+      duelState.player.hp = Math.max(0, duelState.player.hp - edm);
+      addLog(`Tour ${duelState.turn}: ${eCrit?'💥 CRITIQUE! ':''}<strong>${duelState.enemy.card.name}</strong> inflige <strong>${edm}</strong> dégâts!`, eCrit?'crit':'hit');
+    }
+    duelState.turn++;
+    renderDuelField();
+    if (duelState.player.hp <= 0) { endDuel(false); return; }
+    renderDuelBtns();
+  }, 600);
+  renderDuelField();
+}
+
+function endDuel(win) {
+  duelState.over = true;
+  SAVE.totalDuels = (SAVE.totalDuels||0)+1;
+  const rarMult = {COMMON:1,UNCOMMON:2,RARE:3,EPIC:5,LEGENDARY:10,MYTHIC:20};
+  const reward = win ? Math.floor(50*(rarMult[duelState.enemy.card.rarity]||1)*(1+Math.random())) : 0;
+  if (win) { SAVE.duelWins=(SAVE.duelWins||0)+1; SAVE.gems+=reward; SAVE.gemsEarned=(SAVE.gemsEarned||0)+reward; }
+  addLog(win ? `🏆 VICTOIRE! +${reward} gems!`:`💀 Défaite... Réessaie!`, win?'win':'lose');
+  updateGems();
+  writeSave();
+  document.getElementById('duel-btns').innerHTML = `
+    <button class="btn btn-gold" onclick="startDuel()">♻️ Rejouer</button>
+    <button class="btn btn-secondary" onclick="initDuelPage()">← Retour</button>`;
+}
+
+function duelSkip() {
+  let rounds = 0;
+  while (!duelState.over && rounds < 50) {
+    const p=duelState.player, e=duelState.enemy;
+    e.hp = Math.max(0, e.hp - Math.max(1,p.card.attack-Math.floor(e.card.defense*0.3)));
+    if (e.hp<=0){endDuel(true);return;}
+    p.hp = Math.max(0, p.hp - Math.max(1,e.card.attack-Math.floor(p.card.defense*0.3)));
+    if (p.hp<=0){endDuel(false);return;}
+    rounds++;
+  }
+  if (!duelState.over) endDuel(duelState.player.hp >= duelState.enemy.hp);
+  renderDuelField();
+}
+
+function renderDuelBtns() {
+  document.getElementById('duel-btns').innerHTML = `
+    <button class="btn btn-primary" onclick="duelAttack()">⚔️ Attaquer</button>
+    <button class="btn btn-gold btn-sm" onclick="duelSkip()">⏩ Auto</button>
+    <button class="btn btn-secondary btn-sm" onclick="initDuelPage()">← Abandon</button>`;
+}
+
+function renderProfile() {
+  document.getElementById('prof-avatar').textContent = SAVE.emoji;
+  document.getElementById('prof-name').textContent = SAVE.name;
+  document.getElementById('prof-since').textContent = `Joueur depuis le ${new Date(SAVE.createdAt).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'})}`;
+  const nc = SAVE.cards.length;
+  const uniqueIds = new Set(SAVE.cards.map(ci=>ci.cardId));
+  const rarities = {};
+  SAVE.cards.forEach(ci=>{const c=CARD_MAP[ci.cardId];if(c)rarities[c.rarity]=(rarities[c.rarity]||0)+1;});
+  const winrate = SAVE.totalDuels>0?((SAVE.duelWins/SAVE.totalDuels)*100).toFixed(0)+'%':'—';
+  const level = Math.floor(Math.sqrt(nc)) + 1;
+  document.getElementById('prof-badges').innerHTML = `<span class="badge badge-level">✨ Niveau ${level}</span>`;
+  document.getElementById('prof-stats').innerHTML = `
+    <div class="ps-box"><div class="ps-val">${nc}</div><div class="ps-lbl">Cartes total</div></div>
+    <div class="ps-box"><div class="ps-val">${uniqueIds.size}</div><div class="ps-lbl">Cartes uniques</div></div>
+    <div class="ps-box"><div class="ps-val">${((uniqueIds.size/1005)*100).toFixed(1)}%</div><div class="ps-lbl">Complétion</div></div>
+    <div class="ps-box"><div class="ps-val">${(SAVE.gems||0).toLocaleString()}</div><div class="ps-lbl">Gems</div></div>
+    <div class="ps-box"><div class="ps-val">${SAVE.totalPacks||0}</div><div class="ps-lbl">Packs ouverts</div></div>
+    <div class="ps-box"><div class="ps-val">${SAVE.duelWins||0}/${SAVE.totalDuels||0}</div><div class="ps-lbl">Victoires duels</div></div>
+    <div class="ps-box"><div class="ps-val">${winrate}</div><div class="ps-lbl">Taux de victoire</div></div>
+    <div class="ps-box"><div class="ps-val">${rarities.LEGENDARY||0}</div><div class="ps-lbl">Légendaires</div></div>
+    <div class="ps-box"><div class="ps-val">${rarities.MYTHIC||0}</div><div class="ps-lbl">Mythiques</div></div>
+  `;
+  const trophies = [
+    { name:'Premier Pack',         icon:'🎁', desc:'Ouvrir son premier pack',         done:(SAVE.totalPacks||0)>=1       },
+    { name:'Collectionneur',       icon:'📚', desc:'Obtenir 50 cartes',               done:nc>=50                         },
+    { name:'Grand Collectionneur', icon:'📖', desc:'Obtenir 200 cartes',              done:nc>=200                        },
+    { name:'Chasseur de Raretés',  icon:'💜', desc:'Obtenir 5 cartes Épiques',        done:(rarities.EPIC||0)>=5          },
+    { name:'Touché par les Dieux', icon:'⭐', desc:'Obtenir une carte Légendaire',    done:(rarities.LEGENDARY||0)>=1     },
+    { name:'Mythe Vivant',         icon:'🌟', desc:'Obtenir une carte Mythique',      done:(rarities.MYTHIC||0)>=1        },
+    { name:'Duelliste',            icon:'⚔️', desc:'Gagner 5 duels',                  done:(SAVE.duelWins||0)>=5          },
+    { name:'Champion',             icon:'🏆', desc:'Gagner 50 duels',                 done:(SAVE.duelWins||0)>=50         },
+    { name:'Riche',                icon:'💎', desc:'Accumuler 10 000 gems',           done:(SAVE.gems||0)>=10000          },
+    { name:'Milliardaire',         icon:'🤑', desc:'Accumuler 100 000 gems',          done:(SAVE.gems||0)>=100000         },
+  ];
+  document.getElementById('prof-trophies').innerHTML = trophies.map(t=>
+    `<div style="background:var(--surface);border:1px solid ${t.done?'var(--gold)':'var(--border)'};border-radius:12px;padding:14px;display:flex;align-items:center;gap:12px;opacity:${t.done?1:0.5}">
+      <span style="font-size:28px;">${t.icon}</span>
+      <div><div style="font-weight:800;font-size:13px;">${t.name}</div><div style="font-size:12px;color:var(--muted);">${t.desc}</div>${t.done?'<div style="font-size:11px;color:var(--gold);margin-top:2px;">✓ Débloqué</div>':''}</div>
+    </div>`
+  ).join('');
+}
+
+function openAvatarEdit() {
+  document.getElementById('avatar-picker-grid').innerHTML = AVATARS.map(e=>
+    `<div class="emoji-opt${SAVE.emoji===e?' selected':''}" onclick="selectAvatarEdit('${e}',this)">${e}</div>`
+  ).join('');
+  openModal('avatar-modal');
+}
+
+let tmpAvatar = null;
+function selectAvatarEdit(e, el) {
+  tmpAvatar = e;
+  document.querySelectorAll('#avatar-picker-grid .emoji-opt').forEach(x=>x.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function saveAvatar() {
+  if (tmpAvatar) {
+    SAVE.emoji = tmpAvatar;
+    writeSave();
+    document.getElementById('topbar-avatar').textContent = SAVE.emoji;
+    document.getElementById('prof-avatar').textContent = SAVE.emoji;
+    toast('Avatar mis à jour!','s');
+  }
+  closeModal('avatar-modal');
+}
+
+function openCardModal(cardId) {
+  const card = CARD_MAP[cardId]; if(!card) return;
+  const rc = RARITIES[card.rarity];
+  document.getElementById('card-detail-content').innerHTML = `
+    <div class="cd-img">${renderCardSVG(card,180,252)}</div>
+    <div class="cd-name">${card.name}</div>
+    <div class="cd-rarity rc-${card.rarity}">${rc?.name} ${'★'.repeat(rc?.stars||1)}</div>
+    <div class="cd-stats">
+      <div class="cd-stat"><div class="sv" style="color:#ff9999;">${card.attack}</div><div class="sl">ATTAQUE</div></div>
+      <div class="cd-stat"><div class="sv" style="color:#99ff99;">${card.defense}</div><div class="sl">DÉFENSE</div></div>
+      <div class="cd-stat"><div class="sv" style="color:#9999ff;">${card.hp}</div><div class="sl">HP</div></div>
+      <div class="cd-stat"><div class="sv" style="color:var(--gold);">${card.power}</div><div class="sl">PUISSANCE</div></div>
+      <div class="cd-stat"><div class="sv">${card.elIcon}</div><div class="sl">${card.element}</div></div>
+      <div class="cd-stat"><div class="sv" style="color:var(--c-legendary);">💎${card.value.toLocaleString()}</div><div class="sl">VALEUR</div></div>
+    </div>
+    <div class="cd-desc">${card.desc}</div>
+    <div class="cd-id">${card.id} | ${card.gem} × ${card.animal}</div>`;
+  openModal('card-modal');
+}
+
+function openModal(id) { document.getElementById(id).classList.add('show'); }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+document.querySelectorAll('.overlay').forEach(ov=>{
+  ov.addEventListener('click', e=>{ if(e.target===ov) ov.classList.remove('show'); });
+});
+
+function toast(msg, type='i', duration=3000) {
+  const icons = {s:'✅',e:'❌',i:'💡',g:'💰'};
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<span>${icons[type]||'ℹ️'}</span><span>${msg}</span>`;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(()=>el.remove(), duration);
+}
+
+function showHowTo() { openModal('howto-modal'); }
+
+function confirmReset() {
+  if (confirm('Supprimer TOUTE ta progression? Cette action est irréversible!')) {
+    localStorage.removeItem(SAVE_KEY);
+    location.reload();
+  }
+}
+
+setInterval(()=>{ if (SAVE && currentPage==='packs') renderPacks(); }, 30000);
+
+document.addEventListener('keydown', e=>{
+  if (e.key==='Escape') {
+    document.querySelectorAll('.overlay.show').forEach(m=>m.classList.remove('show'));
+    const ov=document.getElementById('opening-overlay');
+    if(ov.classList.contains('show')) closeOpening();
+  }
+});
+
+const existingSave = loadSave();
+if (existingSave) { SAVE = existingSave; }
+</script>
+</body>
+</html>
